@@ -1,0 +1,4 @@
+transformers
+numpy
+Pillow
+tqdm

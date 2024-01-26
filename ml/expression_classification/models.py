@@ -45,6 +45,8 @@ class ExpressionClassifier(nn.Module):
             for _ in range(3):
                 x = self.bottleneck_dense_networks[i](x)
         
+        x = self.avgpool2d(x).squeeze()
+        
         x = self.fully_connected(x)
         
         return x
@@ -76,3 +78,23 @@ class Bottleneck(nn.Module):
             y += x
         
         return y
+
+if __name__ == '__main__':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Testing expression classifier on device', device)
+    
+    batch_size = 16
+    num_classes = 3
+    size = 256
+    
+    test_img = torch.randn((batch_size, 3, size, size), dtype=torch.float32, device=device)
+    assert size % 16 == 0, 'Image shape invalid'
+    
+    print('Initializing network')
+    model = ExpressionClassifier(num_classes).to(device)
+    
+    print('Running forward pass on image of size', test_img.shape)
+    out = model(test_img)
+    
+    assert out.shape[0] == batch_size and out.shape[1] == num_classes, 'Wrong output'
+    print('ALL GOOD')

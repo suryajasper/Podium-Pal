@@ -27,6 +27,9 @@ server.get("/events", (req, res) => {
 });
 
 server.post("/audiogen", (req, res) => {
+  if (!req.body.text || req.body.text.trim() === "") {
+    return res.status(400).send("Text parameter is empty or missing");
+  }
   const params = req.body; // Access data sent in the request body
   console.log(params); // Use or log the received parameters
   const jsonData = JSON.stringify({

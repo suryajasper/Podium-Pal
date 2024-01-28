@@ -55,7 +55,7 @@ function Interview() {
   ]);
   let [isMute, setMute] = useState(true);
   let [tab, setTab] = useState(false);
-  useEffect(() => {
+  /*useEffect(() => {
     const eventSource = new EventSource("http://localhost:3001/events");
 
     eventSource.onmessage = async (event) => {
@@ -76,7 +76,30 @@ function Interview() {
     return () => {
       eventSource.close();
     };
-  }, [isLoaded]);
+  }, [isLoaded]);*/
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:8765");
+
+    // Connection opened
+    socket.addEventListener("open", (event) => {
+      socket.send("Hello Server!");
+    });
+
+    // Listen for messages
+    socket.addEventListener("message", (event) => {
+      console.log(`Message from server: ${event.data}`);
+    });
+
+    // Connection closed
+    socket.addEventListener("close", (event) => {
+      console.log("WebSocket connection closed:", event);
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      socket.close();
+    };
+  }, []);
   const tickerRef = useRef();
 
   const addText = (text) => {
@@ -177,7 +200,7 @@ function Interview() {
             height: 306,
             boxShadow: "0px 0px 20px 0px #aaaa33",
             transition:
-              "margin-top 2s ease-in-out, margin-left 1s ease-in-out, opacity 3s ease-in",
+              "margin-top 2s ease-in-out, margin-left 1s ease-in-out , opacity 3s ease-in",
             marginLeft: noted ? 600 : isLoaded && !isChat ? 60 : -700,
             opacity: isLoaded && !noted ? 1 : 0,
             zIndex: 1,
@@ -191,8 +214,6 @@ function Interview() {
               backgroundColor: "#f4e37b",
               border: "none",
               color: "brown",
-              width: "100%",
-              height: "50px",
               fontSize: "20px",
               height: 200,
               width: 250,

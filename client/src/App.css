@@ -23,6 +23,13 @@
   margin-right: auto;
   z-index: 4;
 }
+.vid1 {
+  width: 45px;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+  z-index: 4;
+}
 @keyframes logo-spin {
   from {
     transform: rotate(0deg);

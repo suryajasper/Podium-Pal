@@ -20,26 +20,49 @@ import loading from "../assets/loading.gif";
 import { BgVid } from "../components/bgvid";
 import { Chat } from "../components/chat";
 
-const socket = new WebSocket("ws://localhost:8765");
+const sendSocket = new WebSocket("ws://localhost:8765");
 let socketSend = undefined;
+let sendMessageGlobal = undefined;
+let addTextGlobal = undefined;
+
+let curr_dialogue = "";
+let num_responses = 0;
 
 // Connection opened
-socket.addEventListener("open", (event) => {
-  console.log("socket is open");
-  socket.send(JSON.stringify({ status: "up and running" }));
+sendSocket.addEventListener("open", (event) => {
+  console.log("send socket is open");
+  sendSocket.send(JSON.stringify({ status: "up and running" }));
   socketSend = (packet) => {
     console.log("sending packet", packet);
-    socket.send(JSON.stringify(packet));
+    sendSocket.send(JSON.stringify(packet));
   };
 });
 
 // Listen for messages
-socket.addEventListener("message", (event) => {
-  console.log(`Message from server: ${event.data}`);
+sendSocket.addEventListener("message", (event) => {
+  console.log(`Message from send socket: ${event.data}`);
+  let data = JSON.parse(event.data);
+  console.log("type", data.type);
+  if (data.type == "speak") {
+    audioGen(data.content)
+      .then((audio) => {
+        console.log("doing the audoi stuff");
+        sendMessageGlobal("Lipsync", "ReceiveAudio", JSON.stringify(audio));
+        addTextGlobal(data.content);
+      })
+      .catch((err) => {
+        console.error("Error generating audio:", err);
+      });
+  }
+
+  if (data.type == "display_speech") {
+    console.log("display_speech");
+    curr_dialogue += data.content + "\n";
+  }
 });
 
 // Connection closed
-socket.addEventListener("close", (event) => {
+sendSocket.addEventListener("close", (event) => {
   console.log("WebSocket connection closed:", event);
 });
 
@@ -65,6 +88,7 @@ function Interview() {
     frameworkUrl: "Build/public.framework.js.unityweb",
     codeUrl: "Build/public.wasm.unityweb",
   });
+  sendMessageGlobal = sendMessage;
   let [noteInput, setNoteInput] = useState("");
   let [textInput, setTextInput] = useState("");
   let [isChat, setChat] = useState(false);
@@ -78,7 +102,7 @@ function Interview() {
       avatar: me,
     },
   ]);
-  let [isMute, setMute] = useState(true);
+  let [isMute, setMute] = useState(false);
   let [tab, setTab] = useState(false);
   /*useEffect(() => {
     const eventSource = new EventSource("http://localhost:3001/events");
@@ -108,7 +132,19 @@ function Interview() {
   const addText = (text) => {
     tickerRef.current.addText(text);
   };
+  addTextGlobal = addText;
   const togMute = () => {
+    if (!isMute && curr_dialogue) {
+      console.log("finished talking");
+      socketSend({ type: "send_gpt", content: curr_dialogue });
+      num_responses++;
+      curr_dialogue = "";
+
+      if (num_responses >= 4) socketSend({ type: "summarize" });
+    }
+
+    if (socketSend) socketSend({ type: "mic", mute: isMute });
+
     setMute(!isMute);
   };
   const setHappy = () => {
@@ -139,6 +175,15 @@ function Interview() {
   };
   const handleNote = () => {
     setNoted(true);
+    audioGen("I recieved your note!")
+      .then((audio) => {
+        sendMessageGlobal("Lipsync", "ReceiveAudio", JSON.stringify(audio));
+        addTextGlobal(data.content);
+      })
+      .catch((err) => {
+        console.error("Error generating audio:", err);
+      });
+    addText("I recieved your note!");
     sendMessage("business", "TriggerHand");
     sendMessage("Main Camera", "TriggerCam");
     if (socketSend) socketSend({ type: "initial_prompt", content: noteInput });

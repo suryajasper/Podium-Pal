@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 var messageSchema = new mongoose.Schema({
+    sessionId: {
+        type: String,
+        default: "",
+    },
     author: String,
     content: String,
     emotion: String,

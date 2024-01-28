@@ -12,6 +12,8 @@ import happy from "../assets/happy.png";
 import sad from "../assets/sad.png";
 import neutral from "../assets/neutral.png";
 import angry from "../assets/angry.png";
+import me from "../assets/me.png";
+import person from "../assets/person.jpg";
 import unchat from "../assets/unchat.png";
 import { BgVid } from "../components/bgvid";
 import { Chat } from "../components/chat";
@@ -22,7 +24,17 @@ function Interview() {
     frameworkUrl: "Build/public.framework.js.unityweb",
     codeUrl: "Build/public.wasm.unityweb",
   });
+  let [textInput, setTextInput] = useState("");
   let [isChat, setChat] = useState(false);
+  let [chatMessages, setChatMessages] = useState([
+    {
+      position: "left",
+      type: "text",
+      title: "Kiyo",
+      text: "Give me a message list example !",
+      avatar: me,
+    },
+  ]);
   let [isMute, setMute] = useState(true);
   let [tab, setTab] = useState(false);
   useEffect(() => {
@@ -80,6 +92,20 @@ function Interview() {
   };
   const handleLeave = () => {
     alert("Leave the chat?");
+  };
+  const handleChat = () => {
+    setChatMessages((prev) => {
+      return [
+        ...prev,
+        {
+          position: "right",
+          type: "text",
+          title: "User",
+          text: textInput,
+          avatar: person,
+        },
+      ];
+    });
   };
   return (
     <>
@@ -215,17 +241,19 @@ function Interview() {
       <div
         style={{
           position: "absolute",
-          display: isChat ? "flex" : "none",
+          //display: isChat ? "flex" : "none",
           width: "30vw",
-          marginLeft: "63vw",
+          marginLeft: isChat ? "70vw" : "100vw",
+          transition: "margin-left 1.5s ease-in-out",
           justifyContent: "center",
           height: "835px",
           top: 0,
           background: "none",
-          transition: "width 1s ease-in-out",
         }}>
         <div
           style={{
+            transform: isChat ? "rotate(-15deg)" : "rotate(0deg)",
+            transition: "transform 1.5s ease-in-out",
             width: 500,
             paddingTop: 25,
             position: "relative",
@@ -235,6 +263,44 @@ function Interview() {
             borderRadius: 25,
             boxShadow: "0px 0px 20px 0px #99bbdd",
           }}>
+          <div
+            key="del"
+            className="row"
+            style={{
+              marginLeft: 35,
+              width: "430px",
+              marginTop: 630,
+              position: "absolute",
+            }}>
+            <div className="col-8">
+              <input
+                type="text"
+                value={textInput || ""}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Text Something..."
+                style={{
+                  width: "100%",
+                  height: "50px",
+                  fontSize: "20px",
+                  bottom: 0,
+                  padding: "10px",
+                }}
+              />
+            </div>
+            <div className="col-4">
+              <button
+                onClick={handleChat}
+                style={{
+                  width: "100%",
+                  height: "50px",
+                  fontSize: "20px",
+                  padding: "10px",
+                  backgroundColor: "#aaaaff",
+                }}>
+                Send
+              </button>
+            </div>
+          </div>
           <div
             style={{
               borderRadius: 30,
@@ -255,7 +321,8 @@ function Interview() {
               }}>
               <h2 style={{ paddingTop: "13px" }}>Live Chat</h2>
             </div>
-            <Chat />
+            <Chat messages={chatMessages} />
+            */
           </div>
         </div>
       </div>

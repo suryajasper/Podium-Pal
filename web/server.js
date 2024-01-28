@@ -13,6 +13,8 @@ connectToMongo();
 app.post('/session/create', async(req,res) => {
     try {
         const session = await Session.create(req.body);
+        await session.save();
+        console.log("Creating session");
     } catch (error) {
         console.log("Error creating session", error);
         res.status(500).json({ error: "Internal Server Error", message: error.message });

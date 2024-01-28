@@ -6,7 +6,7 @@ import React, {
   useImperativeHandle,
 } from "react";
 
-const time = 8;
+const time = 15;
 
 const DynamicTicker = forwardRef((props, ref) => {
   const [texts, setTexts] = useState([]);
@@ -57,13 +57,13 @@ const MovingText = ({ text, onComplete }) => {
     color: "#65A7E0",
     fontSize: "40px",
     fontWeight: "600",
-    width: "1000px",
+    width: "3000px",
     animation: `moveText ${time}s linear`,
-    marginLeft: "-1000px",
+    marginLeft: "1000px",
     zIndex: "5",
   };
 
-  const keyframes = `@keyframes moveText { from { margin-left: 1000px; } to { margin-left: -1000px; } }`;
+  const keyframes = `@keyframes moveText { from { margin-left: 0px; } to { margin-left: -3000px; } }`;
 
   return (
     <>

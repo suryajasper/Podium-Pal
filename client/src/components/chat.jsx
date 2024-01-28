@@ -6,9 +6,13 @@ export function Chat({ messages }) {
   const messageListReference = React.createRef();
 
   return (
-    <div style={{ marginTop: "20px", height: 200 }}>
+    <div
+      style={{
+        marginTop: "20px",
+        height: "520px", // Set a fixed height
+        overflowY: "auto",
+      }}>
       <MessageList
-        style={{ overflow: "scroll" }}
         className="message-list"
         lockable={true}
         toBottomHeight={"100%"}

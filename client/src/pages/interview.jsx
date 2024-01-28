@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "../App.css";
+import { useGlitch } from "react-powerglitch";
 import "bootstrap/dist/css/bootstrap.css";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import { audioGen } from "../utils/audiogen";
@@ -15,17 +16,34 @@ import angry from "../assets/angry.png";
 import me from "../assets/me.png";
 import person from "../assets/person.jpg";
 import unchat from "../assets/unchat.png";
+import loading from "../assets/loading.gif";
 import { BgVid } from "../components/bgvid";
 import { Chat } from "../components/chat";
 function Interview() {
+  const glitch = useGlitch({
+    timing: {
+      duration: 1000,
+    },
+    glitchTimeSpan: {
+      start: 0.67,
+      end: 0.7,
+    },
+    shake: false,
+    slice: {
+      velocity: 6,
+      maxHeight: 0.1,
+    },
+  });
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
     loaderUrl: "Build/public.loader.js",
     dataUrl: "Build/public.data.unityweb",
     frameworkUrl: "Build/public.framework.js.unityweb",
     codeUrl: "Build/public.wasm.unityweb",
   });
+  let [noteInput, setNoteInput] = useState("");
   let [textInput, setTextInput] = useState("");
   let [isChat, setChat] = useState(false);
+  let [noted, setNoted] = useState(false);
   let [chatMessages, setChatMessages] = useState([
     {
       position: "left",
@@ -93,6 +111,12 @@ function Interview() {
   const handleLeave = () => {
     alert("Leave the chat?");
   };
+  const handleNote = () => {
+    console.log(noteInput);
+    setNoted(true);
+    sendMessage("business", "TriggerHand");
+    sendMessage("Main Camera", "TriggerCam");
+  };
   const handleChat = () => {
     setChatMessages((prev) => {
       return [
@@ -110,6 +134,87 @@ function Interview() {
   return (
     <>
       <BgVid />
+
+      <div
+        style={{
+          position: "absolute",
+          marginLeft: "836px",
+          marginTop: "-92px",
+          opacity: isLoaded ? 0 : 0.7,
+          zIndex: 0,
+          transition: "opacity 3s ease-out",
+        }}>
+        <img src={loading} style={{ width: 250 }} />
+        <h2
+          style={{
+            color: "white",
+            fontSize: "19px",
+            marginTop: -105,
+            marginLeft: 5,
+          }}>
+          Loading...
+        </h2>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          display: "flex",
+          width: "20vw",
+          height: "100%",
+          top: 0,
+          background: "none",
+        }}>
+        <div
+          style={{
+            width: 300,
+            paddingTop: 25,
+            marginTop: noted ? 200 : 400,
+            paddingBottom: 100,
+            backgroundColor: "#f4e37b",
+            position: "absolute",
+            borderRadius: 25,
+            height: 306,
+            boxShadow: "0px 0px 20px 0px #aaaa33",
+            transition:
+              "margin-top 2s ease-in-out, margin-left 1s ease-in-out, opacity 3s ease-in",
+            marginLeft: noted ? 600 : isLoaded && !isChat ? 60 : -700,
+            opacity: isLoaded && !noted ? 1 : 0,
+            zIndex: 1,
+          }}>
+          <textarea
+            type="text"
+            value={noteInput || ""}
+            onChange={(e) => setNoteInput(e.target.value)}
+            placeholder="Job Description Here"
+            style={{
+              backgroundColor: "#f4e37b",
+              border: "none",
+              color: "brown",
+              width: "100%",
+              height: "50px",
+              fontSize: "20px",
+              height: 200,
+              width: 250,
+              bottom: 0,
+              padding: "10px",
+            }}
+          />
+          <button
+            onClick={handleNote}
+            style={{
+              width: "50%",
+              height: "40px",
+              fontSize: "20px",
+              marginTop: 10,
+              padding: "5px",
+              backgroundColor: "#eeeeee",
+            }}>
+            Send
+          </button>
+        </div>
+      </div>
+
       <div
         style={{
           position: "absolute",
@@ -117,9 +222,12 @@ function Interview() {
           width: isChat ? "63vw" : "100vw",
           justifyContent: "center",
           height: "100%",
+          marginLeft: isLoaded ? 0 : -1500,
           top: 0,
           background: "none",
-          transition: "width 1s ease-in-out",
+          opacity: isLoaded ? 1 : 0,
+          transition:
+            "width 1s ease-in-out, margin-left 1.5s ease-out, opacity 1.5s ease-in",
         }}>
         <div
           style={{
@@ -231,7 +339,6 @@ function Interview() {
               <img src={end} className="vid" onClick={handleLeave} />
             </div>
           </div>
-
           <Unity
             unityProvider={unityProvider}
             style={{ borderRadius: 30, width: 1000, height: 500, zIndex: 5 }}

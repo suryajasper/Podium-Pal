@@ -24,7 +24,7 @@ const sendSocket = new WebSocket("ws://localhost:8765");
 let socketSend = undefined;
 let sendMessageGlobal = undefined;
 let addTextGlobal = undefined;
-
+let addSelfMsgGlobal = undefined;
 let curr_dialogue = "";
 let num_responses = 0;
 
@@ -44,6 +44,7 @@ sendSocket.addEventListener("message", (event) => {
   let data = JSON.parse(event.data);
   console.log("type", data.type);
   if (data.type == "speak") {
+    addSelfMsgGlobal(data.content);
     audioGen(data.content)
       .then((audio) => {
         console.log("doing the audoi stuff");
@@ -54,7 +55,9 @@ sendSocket.addEventListener("message", (event) => {
         console.error("Error generating audio:", err);
       });
   }
-
+  if (data.type == "summarize") {
+    addSelfMsgGlobal("Summary:\n" + data.content);
+  }
   if (data.type == "display_speech") {
     console.log("display_speech");
     curr_dialogue += data.content + "\n";
@@ -116,6 +119,19 @@ function Interview() {
       },
     ]);
   };
+  addSelfMsgGlobal = addSelfMsg;
+  const addUserMsg = (text) => {
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        position: "right",
+        type: "text",
+        title: "User",
+        text,
+        avatar: person,
+      },
+    ]);
+  };
   /*useEffect(() => {
     const eventSource = new EventSource("http://localhost:3001/events");
 
@@ -148,6 +164,7 @@ function Interview() {
   const togMute = () => {
     if (isMute && curr_dialogue) {
       console.log("finished talking");
+      addUserMsg(curr_dialogue);
       socketSend({ type: "ask_gpt", content: curr_dialogue });
       num_responses++;
       curr_dialogue = "";
@@ -190,7 +207,6 @@ function Interview() {
     audioGen("I recieved your note!")
       .then((audio) => {
         sendMessageGlobal("Lipsync", "ReceiveAudio", JSON.stringify(audio));
-        addTextGlobal(data.content);
       })
       .catch((err) => {
         console.error("Error generating audio:", err);

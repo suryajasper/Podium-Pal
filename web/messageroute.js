@@ -28,4 +28,5 @@ router.post('/messages', async (req, res) => {
     }
 });
 
-module.exports router
+module.exports = router
+

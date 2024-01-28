@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from vision.utils import box_utils
+from facial_detection.vision.utils import box_utils
 
 GraphPath = namedtuple("GraphPath", ['s0', 'name', 's1'])
 

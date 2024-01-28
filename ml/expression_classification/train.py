@@ -11,7 +11,7 @@ from expression_classification.models import ExpressionClassifier
 # Define configurable hyperparameters
 batch_size = 32
 learning_rate = 0.001
-num_epochs = 10
+num_epochs = 30
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Define transformations for data preprocessing
@@ -35,8 +35,9 @@ class CustomDataset(Dataset):
 
 # initializing dataloaders
 print('initializing dataloaders')
-train_data_path = "expression_classification/data/train"
-test_data_path = "expression_classification/data/test"
+train_data_path = "expression_classification/data/images/train"
+test_data_path = "expression_classification/data/images/validation"
+save_path = "expression_classification/model_checkpoint.pth"
 
 train_dataset = CustomDataset(train_data_path, transform=transform)
 test_dataset = CustomDataset(test_data_path, transform=transform)
@@ -49,13 +50,19 @@ model = ExpressionClassifier(num_classes=len(train_dataset.classes)).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-# Training loop
-print('starting training loop')
+if torch.cuda.is_available():
+    checkpoint = torch.load(save_path)
+else:
+    checkpoint = torch.load(save_path, map_location=torch.device('cpu'))
+
+model.load_state_dict(checkpoint)
+
+# training loop
 for epoch in range(num_epochs):
     model.train()
     running_loss = 0.0
 
-    for inputs, labels in tqdm(train_loader, desc=f"Epoch {epoch + 1}/{num_epochs}"):
+    for batch_idx, (inputs, labels) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{num_epochs}")):
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
 
@@ -66,23 +73,30 @@ for epoch in range(num_epochs):
 
         running_loss += loss.item()
 
+        # Print loss and accuracy every 100 batches
+        if (batch_idx + 1) % 100 == 0:
+            print(f"Epoch {epoch + 1}/{num_epochs}, Batch {batch_idx + 1}/{len(train_loader)}, Loss: {loss.item():.4f}")
+
     epoch_loss = running_loss / len(train_loader)
     print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.4f}")
 
-# Testing loop
-model.eval()
-correct_predictions = 0
-total_samples = 0
+    # Testing loop
+    model.eval()
+    correct_predictions = 0
+    total_samples = 0
 
-print('starting testing loop')
-with torch.no_grad():
-    for inputs, labels in tqdm(test_loader, desc="Testing"):
-        inputs, labels = inputs.to(device), labels.to(device)
-        outputs = model(inputs)
-        _, predicted = torch.max(outputs, 1)
+    with torch.no_grad():
+        for inputs, labels in tqdm(test_loader, desc="Testing"):
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, predicted = torch.max(outputs, 1)
 
-        total_samples += labels.shape[0]
-        correct_predictions += (predicted == labels).sum().item()
+            total_samples += labels.size(0)
+            correct_predictions += (predicted == labels).sum().item()
 
-accuracy = correct_predictions / total_samples
-print(f"Test Accuracy: {accuracy * 100:.2f}%")
+    accuracy = correct_predictions / total_samples
+    print(f"Test Accuracy: {accuracy * 100:.2f}%")
+
+    # Save the model checkpoint at the end of each epoch
+    torch.save(model.state_dict(), save_path)
+    print(f"Model saved at: {save_path}")

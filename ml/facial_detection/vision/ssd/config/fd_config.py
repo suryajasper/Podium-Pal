@@ -1,6 +1,6 @@
 import numpy as np
 
-from vision.utils.box_utils import generate_priors
+from facial_detection.vision.utils.box_utils import generate_priors
 
 image_mean_test = image_mean = np.array([127, 127, 127])
 image_std = 128.0

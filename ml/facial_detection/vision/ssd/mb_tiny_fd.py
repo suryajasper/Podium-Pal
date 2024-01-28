@@ -1,9 +1,9 @@
 from torch.nn import Conv2d, Sequential, ModuleList, ReLU
 
-from vision.nn.mb_tiny import Mb_Tiny
-from vision.ssd.config import fd_config as config
-from vision.ssd.predictor import Predictor
-from vision.ssd.ssd import SSD
+from facial_detection.vision.nn.mb_tiny import Mb_Tiny
+from facial_detection.vision.ssd.config import fd_config as config
+from facial_detection.vision.ssd.predictor import Predictor
+from facial_detection.vision.ssd.ssd import SSD
 
 
 def SeperableConv2d(in_channels, out_channels, kernel_size=1, stride=1, padding=0):

@@ -50,6 +50,11 @@ function Interview() {
     setMute(!isMute);
   };
   const togChat = () => {
+    if (isChat) {
+      sendMessage("business", "TriggerLeft");
+    } else {
+      sendMessage("business", "TriggerRight");
+    }
     setChat(!isChat);
   };
   return (
@@ -59,11 +64,12 @@ function Interview() {
         style={{
           position: "absolute",
           display: "flex",
-          width: "100vw",
+          width: isChat ? "60vw" : "100vw",
           justifyContent: "center",
           height: "100%",
           top: 0,
           background: "none",
+          transition: "width 1s ease-in-out",
         }}>
         <div
           style={{
@@ -115,7 +121,7 @@ function Interview() {
 
           <Unity
             unityProvider={unityProvider}
-            style={{ borderRadius: 30, width: 1000 }}
+            style={{ borderRadius: 30, width: 1000, height: 500, zIndex: 5 }}
           />
         </div>
       </div>

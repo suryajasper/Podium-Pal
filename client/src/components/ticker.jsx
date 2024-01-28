@@ -59,10 +59,11 @@ const MovingText = ({ text, onComplete }) => {
     fontWeight: "600",
     width: "1000px",
     animation: `moveText ${time}s linear`,
-    marginLeft: "500px",
+    marginLeft: "-1000px",
+    zIndex: "5",
   };
 
-  const keyframes = `@keyframes moveText { from { margin-left: 550px; } to { margin-left: -1000px; } }`;
+  const keyframes = `@keyframes moveText { from { margin-left: 1000px; } to { margin-left: -1000px; } }`;
 
   return (
     <>

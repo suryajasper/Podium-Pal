@@ -8,8 +8,13 @@ import end from "../assets/end.png";
 import mute from "../assets/mute.png";
 import chat from "../assets/chat.png";
 import unmute from "../assets/unmute.png";
+import happy from "../assets/happy.png";
+import sad from "../assets/sad.png";
+import neutral from "../assets/neutral.png";
+import angry from "../assets/angry.png";
 import unchat from "../assets/unchat.png";
 import { BgVid } from "../components/bgvid";
+import { Chat } from "../components/chat";
 function Interview() {
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
     loaderUrl: "Build/public.loader.js",
@@ -19,6 +24,7 @@ function Interview() {
   });
   let [isChat, setChat] = useState(false);
   let [isMute, setMute] = useState(true);
+  let [tab, setTab] = useState(false);
   useEffect(() => {
     const eventSource = new EventSource("http://localhost:3001/events");
 
@@ -49,6 +55,21 @@ function Interview() {
   const togMute = () => {
     setMute(!isMute);
   };
+  const setHappy = () => {
+    sendMessage("business", "HappyTrigger");
+  };
+  const setSad = () => {
+    sendMessage("business", "SadTrigger");
+  };
+  const setAngry = () => {
+    sendMessage("business", "AngryTrigger");
+  };
+  const setNeutral = () => {
+    sendMessage("business", "TriggerReset");
+  };
+  const togTab = () => {
+    setTab(!tab);
+  };
   const togChat = () => {
     if (isChat) {
       sendMessage("business", "TriggerLeft");
@@ -57,6 +78,9 @@ function Interview() {
     }
     setChat(!isChat);
   };
+  const handleLeave = () => {
+    alert("Leave the chat?");
+  };
   return (
     <>
       <BgVid />
@@ -64,7 +88,7 @@ function Interview() {
         style={{
           position: "absolute",
           display: "flex",
-          width: isChat ? "60vw" : "100vw",
+          width: isChat ? "63vw" : "100vw",
           justifyContent: "center",
           height: "100%",
           top: 0,
@@ -83,8 +107,75 @@ function Interview() {
             boxShadow: "0px 0px 20px 0px #99bbdd",
           }}>
           <div
-            style={{ position: "absolute", width: 1000, bottom: 0, zIndex: 1 }}>
+            style={{
+              position: "absolute",
+              marginLeft: 25,
+              width: 1000,
+              bottom: 100,
+              zIndex: 1,
+            }}>
             <DynamicTicker ref={tickerRef} />
+          </div>
+          {tab ? (
+            <>
+              <div
+                className="row"
+                style={{
+                  position: "absolute",
+                  marginTop: "435px",
+                  width: 300,
+                  marginLeft: 705,
+                  display: "flex",
+                  justifyContent: "center",
+                }}>
+                <div></div>
+                <div className="col-3" style={{ height: 100 }}>
+                  <img src={neutral} onClick={setNeutral} className="vid1" />
+                </div>
+                <div className="col-3">
+                  <img src={happy} onClick={setHappy} className="vid1" />
+                </div>
+                <div className="col-3">
+                  <img src={sad} className="vid1" onClick={setSad} />
+                </div>
+                <div className="col-3">
+                  <img src={angry} className="vid1" onClick={setAngry} />
+                </div>
+              </div>
+              <div
+                style={{
+                  position: "absolute",
+                  zIndex: 3,
+                  width: 340,
+                  height: 85,
+                  marginTop: 415,
+                  marginLeft: 685,
+                  borderTopLeftRadius: 35,
+                  borderBottomRightRadius: 30,
+                  backgroundColor: "#33323c",
+                }}></div>
+            </>
+          ) : (
+            <></>
+          )}
+
+          <div
+            onClick={togTab}
+            style={{
+              position: "absolute",
+              zIndex: 3,
+              width: 60,
+              height: 30,
+              marginTop: tab ? 385 : 470,
+              marginLeft: 900,
+              borderTopLeftRadius: 5,
+              borderTopRightRadius: 5,
+              color: "white",
+              paddingTop: 3,
+              fontWeight: "700",
+              backgroundColor: "#33323c",
+            }}>
+            ▲
           </div>
           <div
             className="row"
@@ -111,11 +202,7 @@ function Interview() {
               />
             </div>
             <div className="col-4">
-              <img
-                src={end}
-                className="vid"
-                onClick={() => alert("exit session?")}
-              />
+              <img src={end} className="vid" onClick={handleLeave} />
             </div>
           </div>
 
@@ -123,6 +210,53 @@ function Interview() {
             unityProvider={unityProvider}
             style={{ borderRadius: 30, width: 1000, height: 500, zIndex: 5 }}
           />
+        </div>
+      </div>
+      <div
+        style={{
+          position: "absolute",
+          display: isChat ? "flex" : "none",
+          width: "30vw",
+          marginLeft: "63vw",
+          justifyContent: "center",
+          height: "835px",
+          top: 0,
+          background: "none",
+          transition: "width 1s ease-in-out",
+        }}>
+        <div
+          style={{
+            width: 500,
+            paddingTop: 25,
+            position: "relative",
+            marginTop: 75,
+            paddingBottom: 100,
+            backgroundColor: "#dddddd",
+            borderRadius: 25,
+            boxShadow: "0px 0px 20px 0px #99bbdd",
+          }}>
+          <div
+            style={{
+              borderRadius: 30,
+              width: 450,
+              height: 710,
+              marginLeft: 25,
+              backgroundColor: "#33323c",
+              zIndex: 5,
+            }}>
+            <div
+              style={{
+                borderTopLeftRadius: 30,
+                borderTopRightRadius: 30,
+                width: 450,
+                height: 70,
+                backgroundColor: "#a6b1be",
+                zIndex: 5,
+              }}>
+              <h2 style={{ paddingTop: "13px" }}>Live Chat</h2>
+            </div>
+            <Chat />
+          </div>
         </div>
       </div>
     </>

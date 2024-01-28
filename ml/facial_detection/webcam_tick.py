@@ -26,4 +26,8 @@ class FacialDetectionTicker():
     
     def detect_face(self, image):
         boxes, labels, probs = self.predictor.predict(image, self.candidate_size / 2, self.threshold)
-        return map(int, boxes[0])
+        
+        if len(boxes) > 0:
+            return map(int, boxes[0])
+        else:
+            return None

@@ -98,12 +98,24 @@ function Interview() {
       position: "left",
       type: "text",
       title: "Kiyo",
-      text: "Give me a message list example !",
+      text: "Ask me anything!",
       avatar: me,
     },
   ]);
   let [isMute, setMute] = useState(false);
   let [tab, setTab] = useState(false);
+  const addSelfMsg = (text) => {
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        position: "left",
+        type: "text",
+        title: "Kiyo",
+        text,
+        avatar: me,
+      },
+    ]);
+  };
   /*useEffect(() => {
     const eventSource = new EventSource("http://localhost:3001/events");
 
@@ -134,9 +146,9 @@ function Interview() {
   };
   addTextGlobal = addText;
   const togMute = () => {
-    if (!isMute && curr_dialogue) {
+    if (isMute && curr_dialogue) {
       console.log("finished talking");
-      socketSend({ type: "send_gpt", content: curr_dialogue });
+      socketSend({ type: "ask_gpt", content: curr_dialogue });
       num_responses++;
       curr_dialogue = "";
 

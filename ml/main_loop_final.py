@@ -10,7 +10,7 @@ from speech_analysis.speech_to_text import SpeechToTextLoop
 from webcam_loop import WebcamLoop
 from gpt.chat import GPTSession
 
-def middleman(communication_queue, send_queue, is_listening, gpt_queue):
+def middleman(communication_queue, send_queue, gpt_queue, is_listening):
     cat_count = {}
     total_updates = 0
     total_eye_contacts = 0
@@ -38,7 +38,7 @@ def middleman(communication_queue, send_queue, is_listening, gpt_queue):
     while True:
         while not communication_queue.empty():
             message = communication_queue.get()
-            if not is_listening:
+            if not is_listening.value:
                 continue
             
             if message['source'] == 'webcam':
@@ -84,7 +84,7 @@ def gpt_worker(gpt_queue, send_queue):
             print('gpt_response', gpt_response)
             send_queue.put({'type': endpoint, 'content': gpt_response})
         
-async def websocket_handler(websocket, path, received_queue, send_queue, gpt_queue):
+async def websocket_handler(websocket, path, received_queue, send_queue, gpt_queue, is_listening):
     print('WebSocket connection established')
     while True:
         try:
@@ -114,13 +114,13 @@ async def websocket_handler(websocket, path, received_queue, send_queue, gpt_que
             print('sending message', message)
             await websocket.send(json.dumps(message_to_send))
 
-def start_websocket_server(received_queue, send_queue, gpt_queue):
+def start_websocket_server(received_queue, send_queue, gpt_queue, is_listening):
     print('Starting WebSocket server')
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     server = websockets.serve(
-        lambda ws, path: websocket_handler(ws, path, received_queue, send_queue, gpt_queue), "localhost", 8765
+        lambda ws, path: websocket_handler(ws, path, received_queue, send_queue, gpt_queue, is_listening), "localhost", 8765
     )
 
     loop.run_until_complete(server)
@@ -137,12 +137,12 @@ if __name__ == '__main__':
     gpt_queue = multiprocessing.Queue()
     is_listening = multiprocessing.Value('b', False)
     
-    middleman_process = multiprocessing.Process(target=middleman, args=(communication_queue, received_queue, to_send_queue, gpt_queue))
+    middleman_process = multiprocessing.Process(target=middleman, args=(communication_queue, to_send_queue, gpt_queue, is_listening))
     worker1_process = multiprocessing.Process(target=webcam_worker, args=(communication_queue,))
     worker2_process = multiprocessing.Process(target=audio_worker, args=(communication_queue,))
     gpt_process = multiprocessing.Process(target=gpt_worker, args=(gpt_queue, to_send_queue))
     
-    websocket_thread = threading.Thread(target=start_websocket_server, args=(received_queue, to_send_queue, gpt_queue))
+    websocket_thread = threading.Thread(target=start_websocket_server, args=(received_queue, to_send_queue, gpt_queue, is_listening))
     
     websocket_thread.start()
     middleman_process.start()

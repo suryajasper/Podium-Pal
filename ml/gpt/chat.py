@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-client = OpenAI(api_key='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')
+client = OpenAI(api_key='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')
 
 sys_msg = {
     "role": "system",

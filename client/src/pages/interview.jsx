@@ -4,6 +4,12 @@ import "bootstrap/dist/css/bootstrap.css";
 import { Unity, useUnityContext } from "react-unity-webgl";
 import { audioGen } from "../utils/audiogen";
 import DynamicTicker from "../components/ticker";
+import end from "../assets/end.png";
+import mute from "../assets/mute.png";
+import chat from "../assets/chat.png";
+import unmute from "../assets/unmute.png";
+import unchat from "../assets/unchat.png";
+import { BgVid } from "../components/bgvid";
 function Interview() {
   const { unityProvider, sendMessage, isLoaded } = useUnityContext({
     loaderUrl: "Build/public.loader.js",
@@ -11,7 +17,8 @@ function Interview() {
     frameworkUrl: "Build/public.framework.js.unityweb",
     codeUrl: "Build/public.wasm.unityweb",
   });
-
+  let [isChat, setChat] = useState(false);
+  let [isMute, setMute] = useState(true);
   useEffect(() => {
     const eventSource = new EventSource("http://localhost:3001/events");
 
@@ -39,37 +46,80 @@ function Interview() {
   const addText = (text) => {
     tickerRef.current.addText(text);
   };
+  const togMute = () => {
+    setMute(!isMute);
+  };
+  const togChat = () => {
+    setChat(!isChat);
+  };
   return (
-    <div
-      style={{
-        position: "absolute",
-        display: "flex",
-        width: "100vw",
-        justifyContent: "center",
-        height: "100%",
-        top: 0,
-        backgroundImage: "url(assets/fcity.gif)",
-      }}>
+    <>
+      <BgVid />
       <div
         style={{
-          width: 1050,
-          paddingTop: 25,
-          paddingBottom: 100,
-          backgroundColor: "#6cfbff",
           position: "absolute",
-          borderRadius: 25,
-          boxShadow: "0px 0px 20px 0px #6cfbff",
+          display: "flex",
+          width: "100vw",
+          justifyContent: "center",
+          height: "100%",
+          top: 0,
+          background: "none",
         }}>
         <div
-          style={{ position: "absolute", width: 1000, bottom: 0, zIndex: 1 }}>
-          <DynamicTicker ref={tickerRef} />
+          style={{
+            width: 1050,
+            paddingTop: 25,
+            marginTop: 75,
+            paddingBottom: 100,
+            backgroundColor: "#dddddd",
+            position: "absolute",
+            borderRadius: 25,
+            boxShadow: "0px 0px 20px 0px #99bbdd",
+          }}>
+          <div
+            style={{ position: "absolute", width: 1000, bottom: 0, zIndex: 1 }}>
+            <DynamicTicker ref={tickerRef} />
+          </div>
+          <div
+            className="row"
+            style={{
+              position: "absolute",
+              marginTop: "515px",
+              width: 1075,
+              display: "flex",
+              justifyContent: "center",
+            }}>
+            <div></div>
+            <div className="col-4" style={{ height: 100 }}>
+              <img
+                src={isChat ? chat : unchat}
+                onClick={togChat}
+                className="vid"
+              />
+            </div>
+            <div className="col-4">
+              <img
+                src={isMute ? mute : unmute}
+                onClick={togMute}
+                className="vid"
+              />
+            </div>
+            <div className="col-4">
+              <img
+                src={end}
+                className="vid"
+                onClick={() => alert("exit session?")}
+              />
+            </div>
+          </div>
+
+          <Unity
+            unityProvider={unityProvider}
+            style={{ borderRadius: 30, width: 1000 }}
+          />
         </div>
-        <Unity
-          unityProvider={unityProvider}
-          style={{ borderRadius: 30, width: 1000 }}
-        />
       </div>
-    </div>
+    </>
   );
 }
 

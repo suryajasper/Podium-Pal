@@ -6,6 +6,9 @@ class EyeDetectionTicker():
       self.eye_cascade = cv2.CascadeClassifier('pretrained/haarcascades/haarcascade_eye_tree_eyeglasses.xml')
       
    def detect_eyes(self, face):
+      if face is None:
+         return []
+      
       face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
       
       eyes = self.eye_cascade.detectMultiScale(face)

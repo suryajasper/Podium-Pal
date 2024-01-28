@@ -72,27 +72,68 @@ def audio_worker(queue):
         audio.start_loop()
         time.sleep(0.5)
 
-def start_websocket_client(received_queue, send_queue):
-    async def receive_websocket():
-        uri = "ws://localhost:8765"
-        async with websockets.connect(uri) as websocket:
-            while True:
-                received = await websocket.recv()
-                print(f"WebSocket client - Received data from server: {received}")
-                received_queue.put(received)
+# def start_websocket_client(received_queue, send_queue):
+#     print('Starting WebSocket client')
 
-    async def send_websocket():
-        uri = "ws://localhost:8766"
-        async with websockets.connect(uri) as websocket:
-            while True:
-                if not send_queue.empty():
-                    to_send = send_queue.get()
-                    await websocket.send(to_send)
+#     async def receive_websocket():
+#         uri = "ws://localhost:8765"
+#         async with websockets.connect(uri) as websocket:
+#             while True:
+#                 print('Waiting for packet')
+#                 received = await websocket.recv()
+#                 print(f"WebSocket client - Received data from server: {received}")
+#                 received_queue.put(received)
 
-    asyncio.run(asyncio.gather(receive_websocket(), send_websocket()))
+#     async def send_websocket():
+#         uri = "ws://localhost:8766"
+#         async with websockets.connect(uri) as websocket:
+#             while True:
+#                 if not send_queue.empty():
+#                     to_send = send_queue.get()
+#                     await websocket.send(to_send)
 
-def gpt_worker(received_queue, to_send_queue, is_listening):
-    gpt_session = GPTSession()
+#     loop = asyncio.new_event_loop()
+#     asyncio.set_event_loop(loop)
+#     tasks = asyncio.gather(receive_websocket(), send_websocket())
+#     loop.run_until_complete(tasks)
+
+#     # Optionally, you can close the loop at the end if needed
+#     # loop.close()
+        
+async def receive_websocket(websocket, path, received_queue):
+    print('start of receive socket')
+    while True:
+        print('waiting to receive')
+        message = await websocket.recv()
+        print(f"Received: {message}")
+        received_queue.put(message)
+
+async def send_websocket(websocket, path, send_queue):
+    print('start of send socket')
+    while True:
+        if not send_queue.empty():
+            message = send_queue.get()
+            await websocket.send(message)
+
+def start_websocket_server(received_queue, send_queue):
+    print('starting websocket server')
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    receive_server = websockets.serve(
+        lambda ws, path: receive_websocket(ws, path, received_queue), "localhost", 8765
+    )
+    send_server = websockets.serve(
+        lambda ws, path: send_websocket(ws, path, send_queue), "localhost", 8766
+    )
+
+    loop.run_until_complete(receive_server)
+    loop.run_until_complete(send_server)
+    loop.run_forever()
+
+
+# def gpt_worker(received_queue, to_send_queue, is_listening):
+#     gpt_session = GPTSession()
 
 if __name__ == '__main__':
     communication_queue = multiprocessing.Queue()
@@ -104,7 +145,7 @@ if __name__ == '__main__':
     worker1_process = multiprocessing.Process(target=webcam_worker, args=(communication_queue,))
     worker2_process = multiprocessing.Process(target=audio_worker, args=(communication_queue,))
     
-    websocket_thread = threading.Thread(target=start_websocket_client, args=(received_queue, to_send_queue, communication_queue))
+    websocket_thread = threading.Thread(target=start_websocket_server, args=(received_queue, to_send_queue,))
     
     websocket_thread.start()
     middleman_process.start()

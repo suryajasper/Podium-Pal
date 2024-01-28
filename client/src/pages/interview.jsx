@@ -19,7 +19,32 @@ import unchat from "../assets/unchat.png";
 import loading from "../assets/loading.gif";
 import { BgVid } from "../components/bgvid";
 import { Chat } from "../components/chat";
+
+const socket = new WebSocket("ws://localhost:8765");
+let socketSend = undefined;
+
+// Connection opened
+socket.addEventListener("open", (event) => {
+  console.log("socket is open");
+  socket.send(JSON.stringify({ status: "up and running" }));
+  socketSend = (packet) => {
+    console.log("sending packet", packet);
+    socket.send(JSON.stringify(packet));
+  };
+});
+
+// Listen for messages
+socket.addEventListener("message", (event) => {
+  console.log(`Message from server: ${event.data}`);
+});
+
+// Connection closed
+socket.addEventListener("close", (event) => {
+  console.log("WebSocket connection closed:", event);
+});
+
 function Interview() {
+  console.log("hello");
   const glitch = useGlitch({
     timing: {
       duration: 1000,
@@ -77,29 +102,7 @@ function Interview() {
       eventSource.close();
     };
   }, [isLoaded]);*/
-  useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8765");
-
-    // Connection opened
-    socket.addEventListener("open", (event) => {
-      socket.send("Hello Server!");
-    });
-
-    // Listen for messages
-    socket.addEventListener("message", (event) => {
-      console.log(`Message from server: ${event.data}`);
-    });
-
-    // Connection closed
-    socket.addEventListener("close", (event) => {
-      console.log("WebSocket connection closed:", event);
-    });
-
-    // Cleanup on component unmount
-    return () => {
-      socket.close();
-    };
-  }, []);
+  useEffect(() => {}, []);
   const tickerRef = useRef();
 
   const addText = (text) => {
@@ -135,10 +138,10 @@ function Interview() {
     alert("Leave the chat?");
   };
   const handleNote = () => {
-    console.log(noteInput);
     setNoted(true);
     sendMessage("business", "TriggerHand");
     sendMessage("Main Camera", "TriggerCam");
+    if (socketSend) socketSend({ type: "initial_prompt", content: noteInput });
   };
   const handleChat = () => {
     setChatMessages((prev) => {

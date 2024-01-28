@@ -1,9 +1,4 @@
-import torch
-from torchvision import transforms
-from expression_classification.models import ExpressionClassifier
 import os
-import cv2
-import argparse
 
 from facial_detection.vision.ssd.mb_tiny_fd import create_mb_tiny_fd, create_mb_tiny_fd_predictor
 from facial_detection.vision.ssd.mb_tiny_RFB_fd import create_Mb_Tiny_RFB_fd, create_Mb_Tiny_RFB_fd_predictor

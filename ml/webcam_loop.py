@@ -7,9 +7,11 @@ import cv2
 import os
 from os import path
 import asyncio
+from queue import Queue
 
 from expression_classification.webcam_tick import ExpressionClassifierTicker
 from facial_detection.webcam_tick import FacialDetectionTicker
+from eye_track.eye_detection import EyeDetectionTicker
 
 class WebcamLoop():
     def __init__(self, queue):
@@ -28,6 +30,7 @@ class WebcamLoop():
 
         self.face_detect_model = FacialDetectionTicker(num_classes, device)
         self.exp_classif_model = ExpressionClassifierTicker(self.cats, device, 'expression_classification/model_checkpoint_trial1.pth')
+        self.eye_track_model = EyeDetectionTicker()
         
         self.cat_count = {}
         self.reset_count()
@@ -61,23 +64,36 @@ class WebcamLoop():
             
             image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
             
-            # detect
+            # detect face
             face_box = self.face_detect_model.detect_face(image)
             if face_box is None:
                 continue
             x1, y1, x2, y2 = face_box
+            cropped_face = orig_image[y1:y2, x1:x2]
+            
+            # detect eyes
+            eyes = self.eye_track_model.detect_eyes(cropped_face)
+            if len(eyes) > 0:
+                for (ex, ey, ew, eh) in eyes:
+                    cv2.rectangle(orig_image, (x1+ex,y1+ey), (x1+ex+ew,y1+ey+eh), (0,255,255), 2)
             
             # classify
-            cropped_face = orig_image[y1:y2, x1:x2]
             classif = self.exp_classif_model.get_classification(cropped_face)
             
-            self.queue.put({'source': 'webcam', 'status': 'classification', 'data': classif})
+            self.queue.put({
+                'source': 'webcam', 
+                'status': 'update', 
+                'data': {
+                    'classification': classif,
+                    'eyes': len(eyes) / 2,
+                }
+            })
             
             # update category frequency
             self.cat_count[classif] += 1
             
             cv2.rectangle(orig_image, (x1, y1), (x2, y2), (0, 255, 0), 4)
-            cv2.putText(orig_image, f"{classif}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+            cv2.putText(orig_image, f"{classif}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2)
 
             orig_image = cv2.resize(orig_image, None, None, fx=0.8, fy=0.8)
             cv2.imshow('Annotated', orig_image)
@@ -92,6 +108,6 @@ class WebcamLoop():
     #     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    webcam_loop = WebcamLoop()
-    asyncio.run(webcam_loop.start_loop())
+    webcam_loop = WebcamLoop(Queue())
+    webcam_loop.start_loop()
     print('started loop')

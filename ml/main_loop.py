@@ -7,6 +7,9 @@ from webcam_loop import WebcamLoop
 
 def middleman(queue):
     cat_count = {}
+    total_updates = 0
+    total_eye_contacts = 0
+    
     cats = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
     
     def reset_count():
@@ -31,14 +34,20 @@ def middleman(queue):
         while not queue.empty():
             message = queue.get()
             if message['source'] == 'webcam':
-                if message['status'] == 'classification':
-                    cat_count[message['data']] += 1
+                if message['status'] == 'update':
+                    total_updates += 1
+                    total_eye_contacts += message['data']['eyes']
+                    cat_count[message['data']['classification']] += 1
+                    
             elif message['source'] == 'audio':
                 if message['status'] == 'new_sentence':
                     cat = pop_emotion()
                     sentence = message['data']
-                    print(f'{sentence} ({cat})')
-            
+                    
+                    eye_contact = 1.0 if total_updates == 0 else total_eye_contacts / total_updates
+                    print(f'{sentence} - Emotion: {cat}, Eye Contact: {(eye_contact*100):.2f}%')
+                    total_eye_contacts = 0
+                    total_updates = 0
             # print(f"Middleman received message: {message}")
 
 def webcam_worker(queue):

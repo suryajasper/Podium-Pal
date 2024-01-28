@@ -48,7 +48,7 @@ def get_classification(model : ExpressionClassifier, cv_face, device) -> str:
     
     return cats[classif]
 
-MODEL_PATH = 'expression_classification/model_checkpoint.pth'
+MODEL_PATH = 'expression_classification/model_checkpoint_trial1.pth'
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = load_classifier_model(MODEL_PATH).to(device)
 print('Loaded classifier model')
@@ -137,6 +137,8 @@ while True:
         
         cv2.rectangle(orig_image, (x1, y1), (x2, y2), (0, 255, 0), 4)
         cv2.putText(orig_image, f"{classif}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        
+        break
 
     orig_image = cv2.resize(orig_image, None, None, fx=0.8, fy=0.8)
     sum_faces += boxes.size(0)

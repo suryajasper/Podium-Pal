@@ -4,7 +4,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
+
+import random
 from tqdm import tqdm
+from os import path
 
 from expression_classification.models import ExpressionClassifier
 
@@ -22,12 +25,13 @@ transform = transforms.Compose([
 
 # Define a custom dataset class
 class CustomDataset(Dataset):
-    def __init__(self, root_dir, transform=None):
+    def __init__(self, root_dir, batch_size, transform=None):
         self.dataset = ImageFolder(root_dir, transform=transform)
         self.classes = self.dataset.classes
+        self.batch_size = batch_size
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.dataset) - len(self.dataset) % self.batch_size
 
     def __getitem__(self, idx):
         img, label = self.dataset[idx]
@@ -37,10 +41,10 @@ class CustomDataset(Dataset):
 print('initializing dataloaders')
 train_data_path = "expression_classification/data/images/train"
 test_data_path = "expression_classification/data/images/validation"
-save_path = "expression_classification/model_checkpoint.pth"
+save_path = "expression_classification/model_checkpoint_trial2.pth"
 
-train_dataset = CustomDataset(train_data_path, transform=transform)
-test_dataset = CustomDataset(test_data_path, transform=transform)
+train_dataset = CustomDataset(train_data_path, batch_size, transform=transform)
+test_dataset = CustomDataset(test_data_path, batch_size, transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -50,14 +54,17 @@ model = ExpressionClassifier(num_classes=len(train_dataset.classes)).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-if torch.cuda.is_available():
-    checkpoint = torch.load(save_path)
-else:
-    checkpoint = torch.load(save_path, map_location=torch.device('cpu'))
-
-model.load_state_dict(checkpoint)
+if path.exists(save_path):
+    print('loading saved model')
+    if torch.cuda.is_available():
+        checkpoint = torch.load(save_path)
+    else:
+        checkpoint = torch.load(save_path, map_location=torch.device('cpu'))
+    model.load_state_dict(checkpoint)
 
 # training loop
+print('starting training loop from scratch')
+print('dataloader length', len(train_loader))
 for epoch in range(num_epochs):
     model.train()
     running_loss = 0.0
@@ -65,17 +72,13 @@ for epoch in range(num_epochs):
     for batch_idx, (inputs, labels) in enumerate(tqdm(train_loader, desc=f"Epoch {epoch + 1}/{num_epochs}")):
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
-
+        
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
 
         running_loss += loss.item()
-
-        # Print loss and accuracy every 100 batches
-        if (batch_idx + 1) % 100 == 0:
-            print(f"Epoch {epoch + 1}/{num_epochs}, Batch {batch_idx + 1}/{len(train_loader)}, Loss: {loss.item():.4f}")
 
     epoch_loss = running_loss / len(train_loader)
     print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.4f}")
